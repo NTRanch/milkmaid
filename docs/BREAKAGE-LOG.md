@@ -70,3 +70,19 @@ not: an individual round — a service round is one sitting, held
 in-core. This mirrors the program's other entries and is stated
 plainly here so the port-back's save-model note rests on a ruling, not
 an accident.
+- **B-8: Raster-advance audit (D-338) failed at Pax's arrival gate,
+  after v1.0 was tagged.** The menu/chart layout sets long body lines
+  at sizes 22–26 from a left margin; in the browser's proportional
+  canvas font they fit, but the preview rasteriser's advance
+  (12 × max(1, round(size/14))) clipped seventeen emissions: all
+  three 18+ gate body lines and its confirm line, the title
+  subtitle, target line, and archive line, all fourteen how-to
+  lines, the end-screen record lines and both end subtitles, and
+  three chart-screen lines. The builder's D-221 pass inspected
+  level frames only, where the layout is safe. Fix (Pax, at the
+  gate): every long line re-set at size 20, the loss title at 44
+  sized to width, one target line shifted to x=220 — text content
+  unchanged. Conformance, 14/14 tests, settings bridge, and the
+  demo playtest re-run green (identical victories); previews
+  re-captured from the fixed build, checksums regenerated, tag
+  v1.0.0 moved to the fix commit before any push.

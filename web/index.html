@@ -637,10 +637,10 @@ function createGame({ seed = 1, level = 0, demo = false } = {}) {
   function drawGate(T) {
     T(240, 250, 64, 1, "MILKMAID");
     T(240, 350, 26, 6, "18+ ONLY BEYOND THIS GATE");
-    T(240, 410, 22, 3, "AN ADULT GAME OF SERVICE, BY NICE THOUGHTS RANCH.");
-    T(240, 445, 22, 3, "LACTATION AND MAID SERVICE, PRESENTED IN THE ABSTRACT.");
-    T(240, 480, 22, 3, "EVERYTHING IS SYMBOLIC. NO ONE IS REAL.");
-    T(240, 560, 24, 8, "PRESS ENTER OR TAP TO CONFIRM YOU ARE 18+");
+    T(240, 410, 20, 3, "AN ADULT GAME OF SERVICE, BY NICE THOUGHTS RANCH.");
+    T(240, 445, 20, 3, "LACTATION AND MAID SERVICE, PRESENTED IN THE ABSTRACT.");
+    T(240, 480, 20, 3, "EVERYTHING IS SYMBOLIC. NO ONE IS REAL.");
+    T(240, 560, 20, 8, "PRESS ENTER OR TAP TO CONFIRM YOU ARE 18+");
   }
 
   function menuRows(T, x, y0, dy, rows, cursor) {
@@ -653,15 +653,15 @@ function createGame({ seed = 1, level = 0, demo = false } = {}) {
 
   function drawTitle(T, R) {
     T(240, 110, 72, 1, "MILKMAID");
-    T(240, 205, 24, 3, "MILK, MADE SERVICE - ALMA KEEPS THE CHART");
+    T(240, 205, 20, 3, "MILK, MADE SERVICE - ALMA KEEPS THE CHART");
     menuRows(T, 240, 320, 62, ["BEGIN SERVICE", "HOW TO SERVE", "THE CHART", "SETTINGS"], g.menuCursor);
     const y = 320 + 4 * 62;
     if (g.menuCursor === 4) T(200, y, 34, 1, ">");
     const lp = LEVEL_TABLE[g.titleLevel];
     T(240, y, 34, g.menuCursor === 4 ? 1 : 6, `ROUND: ${lp.name}`);
-    T(240, y + 46, 20, 3, `TARGET ${ml(lp.targetUl)} ML - ${(lp.timeSteps * 16 / 1000) | 0}S - CIRCUIT ${lp.requiredDistinct === 0 ? "FREE" : lp.requiredDistinct + " METHODS"} - TAP ROW TO CHANGE`);
+    T(220, y + 46, 20, 3, `TARGET ${ml(lp.targetUl)} ML - ${(lp.timeSteps * 16 / 1000) | 0}S - CIRCUIT ${lp.requiredDistinct === 0 ? "FREE" : lp.requiredDistinct + " METHODS"} - TAP ROW TO CHANGE`);
     if (g.lifetime.rounds > 0) {
-      T(240, 700, 22, 8, `THE ARCHIVE: ${g.lifetime.rounds} ROUNDS - ${ml(g.lifetime.yieldUl)} ML - ${g.lifetime.letdowns} LET-DOWNS`);
+      T(240, 700, 20, 8, `THE ARCHIVE: ${g.lifetime.rounds} ROUNDS - ${ml(g.lifetime.yieldUl)} ML - ${g.lifetime.letdowns} LET-DOWNS`);
     }
     T(240, 880, 20, 7, "ARROWS CHOOSE - ENTER CONFIRMS");
     void R;
@@ -685,7 +685,7 @@ function createGame({ seed = 1, level = 0, demo = false } = {}) {
       "HER BODY REFILLS AND GROWS: EVERY LET-DOWN ADDS",
       "CAPACITY, AND THE CHART KEEPS ALL OF IT.",
     ];
-    lines.forEach((s, i) => T(110, 190 + i * 44, 24, 6, s));
+    lines.forEach((s, i) => T(110, 190 + i * 44, 20, 6, s));
     T(110, 850, 22, 8, "ENTER OR ESC TO RETURN");
   }
 
@@ -825,8 +825,8 @@ function createGame({ seed = 1, level = 0, demo = false } = {}) {
 
   function roundRecordLines(T, rec, x, y) {
     const lp = LEVEL_TABLE[rec.level];
-    T(x, y, 26, 6, `${lp.name} - ${rec.won ? "SERVED IN FULL" : "UNFINISHED"}`);
-    T(x, y + 42, 22, 3, `YIELD ${ml(rec.yieldUl)} ML - ${rec.letdowns} LET-DOWNS - ${(rec.stepsUsed * 16 / 1000).toFixed(0)}S OF SERVICE${rec.unhurried ? " - UNHURRIED" : ""}`);
+    T(x, y, 20, 6, `${lp.name} - ${rec.won ? "SERVED IN FULL" : "UNFINISHED"}`);
+    T(x, y + 42, 20, 3, `YIELD ${ml(rec.yieldUl)} ML - ${rec.letdowns} LET-DOWNS - ${(rec.stepsUsed * 16 / 1000).toFixed(0)}S OF SERVICE${rec.unhurried ? " - UNHURRIED" : ""}`);
     const parts = METHOD_NAMES.map((n, m) => `${n} ${ml(rec.byMethodUl[m])}`);
     T(x, y + 78, 20, 3, `BY METHOD: ${parts.join(" - ")}`);
   }
@@ -835,22 +835,22 @@ function createGame({ seed = 1, level = 0, demo = false } = {}) {
     const rec = g.sessionChart[g.sessionChart.length - 1];
     if (won) {
       T(180, 220, 52, 1, "SERVICE COMPLETE");
-      T(180, 300, 26, 6, "THE ROUND IS SERVED, AND THE CHART KEEPS IT.");
+      T(180, 300, 20, 6, "THE ROUND IS SERVED, AND THE CHART KEEPS IT.");
     } else {
-      T(180, 220, 52, 6, "THE ROUND SLIPS AWAY");
-      T(180, 300, 26, 3, "THE SERVICE WAS REAL. THE TARGET WAS NOT MET.");
+      T(180, 220, 44, 6, "THE ROUND SLIPS AWAY");
+      T(180, 300, 20, 3, "THE SERVICE WAS REAL. THE TARGET WAS NOT MET.");
     }
     if (rec) roundRecordLines(T, rec, 180, 400);
-    T(180, 640, 24, 8, won ? "ENTER: READ THE CHART - ESC: TITLE" : "ENTER OR TAP TO RETURN");
+    T(180, 640, 20, 8, won ? "ENTER: READ THE CHART - ESC: TITLE" : "ENTER OR TAP TO RETURN");
   }
 
   function drawChart(T, R) {
     T(80, 70, 44, 1, "THE CHART");
-    T(80, 130, 22, 3, "GROWTH AND YIELD ARCHIVE - THE PUMP'S FULL CHARTING");
-    T(80, 180, 24, 6, `LIFETIME: ${g.lifetime.rounds} ROUNDS - ${ml(g.lifetime.yieldUl)} ML - ${g.lifetime.letdowns} LET-DOWNS - BEST ${ml(g.lifetime.bestUl)} ML`);
+    T(80, 130, 20, 3, "GROWTH AND YIELD ARCHIVE - THE PUMP'S FULL CHARTING");
+    T(80, 180, 20, 6, `LIFETIME: ${g.lifetime.rounds} ROUNDS - ${ml(g.lifetime.yieldUl)} ML - ${g.lifetime.letdowns} LET-DOWNS - BEST ${ml(g.lifetime.bestUl)} ML`);
     T(80, 240, 24, 1, "THIS SESSION");
     const rounds = [...g.sessionChart].reverse().slice(0, 5);
-    if (rounds.length === 0) T(80, 290, 22, 3, "NO ROUNDS SERVED YET. THE CHART WAITS.");
+    if (rounds.length === 0) T(80, 290, 20, 3, "NO ROUNDS SERVED YET. THE CHART WAITS.");
     rounds.forEach((rec, i) => {
       const y = 290 + i * 106;
       T(80, y, 22, rec.won ? 1 : 3, `R${g.sessionChart.length - i} - ${LEVEL_TABLE[rec.level].name}`);
