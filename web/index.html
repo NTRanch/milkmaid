@@ -1,27 +1,1054 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Milkmaid — Nice Thoughts Ranch</title>
+<title>Milkmaid — Milk, Made Service (18+)</title>
 <style>
-  body { background:#0d0208; color:#f7e8f1; font-family: system-ui, sans-serif; margin:0; }
-  main { max-width: 880px; margin: 0 auto; padding: 24px; }
-  h1 { color:#ff2e88; }
-  .gate { border:1px solid #ff2e88; padding:16px; border-radius:8px; }
+  html, body { margin: 0; padding: 0; background: #0d0208; color: #eaeaea;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  main { min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; padding: 16px;
+    box-sizing: border-box; }
+  canvas { width: min(92vmin, 720px); height: min(92vmin, 720px);
+    background: #0d0208; border: 1px solid #540e46; touch-action: manipulation; }
+  p { margin: 0; font-size: 13px; color: #ac9393; text-align: center;
+    max-width: 720px; line-height: 1.5; }
+  .pink { color: #ff2e88; }
 </style>
 </head>
 <body>
 <main>
-  <img src="../assets/brand/header.png" alt="Milkmaid" style="width:100%;height:auto">
-  <h1>Milkmaid</h1>
-  <div class="gate">
-    <p><strong>18+ only.</strong> This is an adult game by Nice Thoughts Ranch.
-    Content warnings and the full screen set (Title / Pause / How to Play /
-    Gameplay / Settings / Game Over-or-Victory) land with the week's build;
-    this shell is the scaffold placeholder for the single-file delivery.</p>
-  </div>
-  <!-- Preflight: the Mojo core inlines here (single-file rule). -->
+  <canvas id="game" width="960" height="960"></canvas>
+  <p><span class="pink">MILKMAID</span> — 18+ only. Milk, Made Service: a maid-service
+  round, presented in the abstract. HOLD the canvas (or hold SPACE) to work the active
+  method; keys 1–4 switch the circuit (pinch, clamps, pump suction, cups), TAB addresses
+  the other side. When she lets down, the flow lands in the active method — and the chart
+  names it. P pauses. Sound is generated live and only ever answers your own input.</p>
+  <p id="records"></p>
 </main>
+<script type="module">
+// kernel.mjs — Milkmaid fluid-timeline kernel, JS transliteration.
+//
+// This file is a CHECKED COPY of the Mojo reference implementation in
+// src/kernel.mojo: same constants, same operation order, same integer
+// math. Any intentional change lands in the Mojo reference first, the
+// vectors in conformance/vectors.json regenerate, and
+// tools/conformance.mjs re-proves this copy. Do not "improve" here.
+//
+// Numerics: every quantity is an integer (microlitres, milli-units).
+// All divisions are floor divisions over non-negative operands, written
+// so no negative numerator reaches a division — Mojo Int and JS Number
+// agree bit-for-bit. No transcendentals anywhere in the model.
+
+const STEP_MS = 16;
+const SIDE_COUNT = 2;
+const METHOD_COUNT = 4;
+
+const SIDE_LEFT = 0;
+const SIDE_RIGHT = 1;
+
+const METHOD_PINCH = 0;
+const METHOD_CLAMPS = 1;
+const METHOD_PUMP = 2;
+const METHOD_CUPS = 3;
+const METHOD_NAMES = ["PINCH", "CLAMPS", "PUMP", "CUPS"];
+const METHOD_FULL_NAMES = ["PINCH", "CLAMPS", "PUMP SUCTION", "CUPS"];
+
+const MILLI_MAX = 1000;
+const LETDOWN_THRESHOLD = 850;
+const LETDOWN_THRESHOLD_CLAMPS = 750;
+const LETDOWN_STEPS = 240;
+const LETDOWN_RESIDUAL_AROUSAL = 320;
+const PRESSURE_DECAY_PER_STEP = 24;
+const AROUSAL_DECAY_PER_STEP = 3;
+const AROUSAL_LETDOWN_DRAIN_PER_STEP = 3;
+const HEAT_DECAY_PER_STEP = 5;
+const GROWTH_PER_LETDOWN_UL = 350;
+
+const PHASE_RUNNING = 0;
+const PHASE_WON = 1;
+const PHASE_LOST = 2;
+
+// The methods circuit from Just a Pinch, as data. Generated to
+// tables/method-tables.json from this table (tools/gen-tables.mjs);
+// a conformance check keeps the JSON and this table identical.
+const METHOD_TABLE = [
+  // pressureRate, trickleUl, trickleThreshold, trickleBoth, letdownUl, letdownBoth, heatRate
+  { pressureRate: 16, trickleRateUl: 6, trickleThreshold: 600, trickleBothSides: false, letdownRateUl: 110, letdownBothSides: false, heatRate: 10 },
+  { pressureRate: 22, trickleRateUl: 4, trickleThreshold: 500, trickleBothSides: true, letdownRateUl: 60, letdownBothSides: true, heatRate: 6 },
+  { pressureRate: 13, trickleRateUl: 10, trickleThreshold: 600, trickleBothSides: true, letdownRateUl: 88, letdownBothSides: true, heatRate: 9 },
+  { pressureRate: 12, trickleRateUl: 7, trickleThreshold: 600, trickleBothSides: true, letdownRateUl: 66, letdownBothSides: true, heatRate: 7 },
+];
+
+function methodParams(method) {
+  // Contract: 0 <= method < 4; out-of-range returns the pinch row
+  // (callers validate first).
+  if (method === METHOD_CLAMPS) return METHOD_TABLE[1];
+  if (method === METHOD_PUMP) return METHOD_TABLE[2];
+  if (method === METHOD_CUPS) return METHOD_TABLE[3];
+  return METHOD_TABLE[0];
+}
+
+// Efficiency curve — a method worked too long goes dull. Piecewise
+// linear over heat milli; evaluated as
+// (y0*(x1-h) + y1*(h-x0)) // (x1-x0) with all operands non-negative.
+const EFF_X = [0, 300, 700, 850, 1000];
+const EFF_Y = [700, 1000, 1000, 620, 260];
+
+function efficiencyMilli(heat) {
+  let h = heat;
+  if (h < 0) h = 0;
+  if (h > 1000) h = 1000;
+  for (let i = 0; i < 4; i++) {
+    const x0 = EFF_X[i];
+    const x1 = EFF_X[i + 1];
+    if (h <= x1) {
+      const y0 = EFF_Y[i];
+      const y1 = EFF_Y[i + 1];
+      return Math.floor((y0 * (x1 - h) + y1 * (h - x0)) / (x1 - x0));
+    }
+  }
+  return 260;
+}
+
+// Deterministic RNG — splitmix32, integer-only (Math.imul), identical
+// to the Mojo kernel's stream. Ambient visual phase only; the model
+// consumes no randomness.
+function rngNext(state) {
+  let z = (state + 0x9e3779b9) >>> 0;
+  z = Math.imul(z ^ (z >>> 16), 0x21f0aaad) >>> 0;
+  z = Math.imul(z ^ (z >>> 15), 0x735a2d97) >>> 0;
+  return (z ^ (z >>> 15)) >>> 0;
+}
+
+function rngAdvance(state) {
+  return (state + 0x9e3779b9) >>> 0;
+}
+
+// Service rounds, as data.
+const LEVEL_TABLE = [
+  { name: "MORNING ROUND", targetUl: 240000, timeSteps: 9375, heatBonus: 0, prodRateUl: 20, requiredDistinct: 0 },
+  { name: "THE FULL CIRCUIT", targetUl: 420000, timeSteps: 11250, heatBonus: 0, prodRateUl: 22, requiredDistinct: 3 },
+  { name: "MADE SERVICE, IN FULL", targetUl: 600000, timeSteps: 13125, heatBonus: 3, prodRateUl: 28, requiredDistinct: 4 },
+];
+
+function levelParams(level) {
+  // Contract: 0 <= level < 3; out-of-range returns round 1.
+  if (level === 1) return LEVEL_TABLE[1];
+  if (level === 2) return LEVEL_TABLE[2];
+  return LEVEL_TABLE[0];
+}
+
+function createState(level, overrides = {}) {
+  const lp = levelParams(level);
+  const s = {
+    arousalMilli: 0,
+    capacityUl: [90000, 90000],
+    distinctMask: 0,
+    growthTotalUl: 0,
+    heatMilli: [0, 0, 0, 0],
+    lastLetdownMethod: -1,
+    letdownCount: 0,
+    letdownsByMethod: [0, 0, 0, 0],
+    letdownStepsLeft: 0,
+    level: lp,
+    method: METHOD_PINCH,
+    phase: PHASE_RUNNING,
+    pressureMilli: 0,
+    roundStepsElapsed: 0,
+    roundStepsLeft: lp.timeSteps,
+    side: SIDE_LEFT,
+    volumeUl: [90000, 90000],
+    yieldByMethodUl: [0, 0, 0, 0],
+    yieldTotalUl: 0,
+  };
+  // Vector-schema overrides: a partial state for boundary vectors.
+  // Only known scalar/array fields, validated by the driver.
+  for (const k of Object.keys(overrides)) {
+    if (k === "level") continue;
+    if (!(k in s)) throw new Error(`unknown state override: ${k}`);
+    s[k] = overrides[k];
+  }
+  return s;
+}
+
+function clampMilli(v) {
+  if (v < 0) return 0;
+  if (v > MILLI_MAX) return MILLI_MAX;
+  return v;
+}
+
+function extract(s, side, wantUl) {
+  // Conservation is structural: never more than the side holds.
+  let got = wantUl;
+  if (got > s.volumeUl[side]) got = s.volumeUl[side];
+  if (got < 0) got = 0;
+  s.volumeUl[side] -= got;
+  s.yieldTotalUl += got;
+  s.yieldByMethodUl[s.method] += got;
+}
+
+// Advance the model one fixed step. Input contract: methodIn is -1
+// (keep) or 0..3 (switch); sideIn is -1 (keep) or 0..1 (address that
+// side). Out-of-contract values are ignored, never trusted. Once
+// phase != PHASE_RUNNING the state is frozen: step is a no-op.
+// Order of operations is the contract the vectors encode; see the Mojo
+// reference, step(), for the numbered list.
+function stepState(s, held, methodIn, sideIn) {
+  if (s.phase !== PHASE_RUNNING) return;
+
+  // 1. Switches.
+  if (methodIn >= 0 && methodIn < METHOD_COUNT) s.method = methodIn;
+  if (sideIn >= 0 && sideIn < SIDE_COUNT) s.side = sideIn;
+  const p = methodParams(s.method);
+
+  // 2. Production.
+  for (let sd = 0; sd < SIDE_COUNT; sd++) {
+    let v = s.volumeUl[sd] + s.level.prodRateUl;
+    if (v > s.capacityUl[sd]) v = s.capacityUl[sd];
+    s.volumeUl[sd] = v;
+  }
+
+  // 3. Heat.
+  for (let m = 0; m < METHOD_COUNT; m++) {
+    if (m === s.method && held) {
+      s.heatMilli[m] = clampMilli(s.heatMilli[m] + p.heatRate + s.level.heatBonus);
+    } else {
+      s.heatMilli[m] = clampMilli(s.heatMilli[m] - HEAT_DECAY_PER_STEP);
+    }
+  }
+
+  // 4. Pressure.
+  if (held) s.pressureMilli = clampMilli(s.pressureMilli + p.pressureRate);
+  else s.pressureMilli = clampMilli(s.pressureMilli - PRESSURE_DECAY_PER_STEP);
+
+  // 5. Arousal.
+  if (held) s.arousalMilli = clampMilli(s.arousalMilli + Math.floor((s.pressureMilli * 16) / 1000));
+  else s.arousalMilli = clampMilli(s.arousalMilli - AROUSAL_DECAY_PER_STEP);
+
+  // 6. Let-down trigger: culmination lands in the ACTIVE method and
+  // the record names it.
+  let threshold = LETDOWN_THRESHOLD;
+  if (s.method === METHOD_CLAMPS) threshold = LETDOWN_THRESHOLD_CLAMPS;
+  if (s.letdownStepsLeft === 0 && s.arousalMilli >= threshold) {
+    s.letdownStepsLeft = LETDOWN_STEPS;
+    s.letdownCount += 1;
+    s.letdownsByMethod[s.method] += 1;
+    s.distinctMask |= 1 << s.method;
+    s.lastLetdownMethod = s.method;
+    if (p.letdownBothSides) {
+      for (let sd = 0; sd < SIDE_COUNT; sd++) {
+        s.capacityUl[sd] += GROWTH_PER_LETDOWN_UL;
+        s.growthTotalUl += GROWTH_PER_LETDOWN_UL;
+      }
+    } else {
+      s.capacityUl[s.side] += GROWTH_PER_LETDOWN_UL;
+      s.growthTotalUl += GROWTH_PER_LETDOWN_UL;
+    }
+  }
+
+  // 7. Extraction.
+  const eff = efficiencyMilli(s.heatMilli[s.method]);
+  if (s.letdownStepsLeft > 0) {
+    s.arousalMilli = clampMilli(s.arousalMilli - AROUSAL_LETDOWN_DRAIN_PER_STEP);
+    const want = Math.floor((p.letdownRateUl * eff) / 1000);
+    if (p.letdownBothSides) {
+      for (let sd = 0; sd < SIDE_COUNT; sd++) extract(s, sd, want);
+    } else {
+      extract(s, s.side, want);
+    }
+    s.letdownStepsLeft -= 1;
+    if (s.letdownStepsLeft === 0 && s.arousalMilli > LETDOWN_RESIDUAL_AROUSAL) {
+      s.arousalMilli = LETDOWN_RESIDUAL_AROUSAL;
+    }
+  } else if (held && s.pressureMilli >= p.trickleThreshold) {
+    const want = Math.floor((p.trickleRateUl * eff) / 1000);
+    if (p.trickleBothSides) {
+      for (let sd = 0; sd < SIDE_COUNT; sd++) extract(s, sd, want);
+    } else {
+      extract(s, s.side, want);
+    }
+  }
+
+  // 8. Timer + judgement. Yield is judged before the clock; the
+  // rotation requirement is part of the win.
+  s.roundStepsLeft -= 1;
+  s.roundStepsElapsed += 1;
+  let distinct = 0;
+  for (let m = 0; m < METHOD_COUNT; m++) {
+    if (((s.distinctMask >> m) & 1) === 1) distinct += 1;
+  }
+  if (s.yieldTotalUl >= s.level.targetUl && distinct >= s.level.requiredDistinct) {
+    s.phase = PHASE_WON;
+  } else if (s.roundStepsLeft <= 0) {
+    s.phase = PHASE_LOST;
+  }
+}
+
+// FNV-1a over the state fields, in declared order (mirrors the Mojo
+// kernel's state_digest, field for field).
+function stateDigest(s) {
+  const fields = [
+    s.arousalMilli, s.capacityUl[0], s.capacityUl[1],
+    s.distinctMask, s.growthTotalUl,
+    s.heatMilli[0], s.heatMilli[1], s.heatMilli[2], s.heatMilli[3],
+    s.lastLetdownMethod + 1, s.letdownCount,
+    s.letdownsByMethod[0], s.letdownsByMethod[1],
+    s.letdownsByMethod[2], s.letdownsByMethod[3],
+    s.letdownStepsLeft, s.method, s.phase, s.pressureMilli,
+    s.roundStepsElapsed, s.side,
+    s.volumeUl[0], s.volumeUl[1], s.yieldTotalUl,
+  ];
+  let h = 2166136261;
+  for (const v of fields) {
+    h = Math.imul(h ^ (v >>> 0), 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+
+// Field-level snapshot for vector expectations: the full observable
+// state, excluding the level parameter block (carried by the vector).
+function snapshotState(s) {
+  return {
+    arousalMilli: s.arousalMilli,
+    capacityUl: [...s.capacityUl],
+    distinctMask: s.distinctMask,
+    growthTotalUl: s.growthTotalUl,
+    heatMilli: [...s.heatMilli],
+    lastLetdownMethod: s.lastLetdownMethod,
+    letdownCount: s.letdownCount,
+    letdownsByMethod: [...s.letdownsByMethod],
+    letdownStepsLeft: s.letdownStepsLeft,
+    method: s.method,
+    phase: s.phase,
+    pressureMilli: s.pressureMilli,
+    roundStepsElapsed: s.roundStepsElapsed,
+    roundStepsLeft: s.roundStepsLeft,
+    side: s.side,
+    volumeUl: [...s.volumeUl],
+    yieldByMethodUl: [...s.yieldByMethodUl],
+    yieldTotalUl: s.yieldTotalUl,
+  };
+}
+
+
+// game.mjs — Milkmaid game layer over the fluid-timeline kernel.
+// Shared verbatim by the shipped page (inlined by tools/assemble.mjs)
+// and the node capture/playtest harnesses. The kernel (core/kernel.mjs,
+// the JS transliteration of the Mojo reference in src/kernel.mojo)
+// owns the model; this layer owns screens, input, the demo policy, the
+// service chart, and the draw list.
+
+
+const PALETTE = [
+  "#0d0208", "#ff2e88", "#f8f0ed", "#ac9393", "#540e46",
+  "#ec8584", "#eaeaea", "#68636c", "#ffd166", "#1a0510",
+];
+
+const INPUT = {
+  tap: 1, confirm: 2, back: 4, pause: 8, up: 16, down: 32, side: 64,
+  mPinch: 128, mClamps: 256, mPump: 512, mCups: 1024,
+};
+const METHOD_BITS = [INPUT.mPinch, INPUT.mClamps, INPUT.mPump, INPUT.mCups];
+
+const SCREEN = {
+  GATE: 0, TITLE: 1, HOWTO: 2, PLAY: 3, PAUSE: 4, SETTINGS: 5,
+  VICTORY: 6, GAMEOVER: 7, CHART: 8,
+};
+
+// Sonified event codes (shell maps them; audio answers input only).
+const EVENT = { NONE: 0, LETDOWN: 1, SWITCH: 2, VICTORY: 3, GAMEOVER: 4, SIDE: 5, START: 6 };
+
+const SAMPLE_EVERY_STEPS = 30;
+const SAMPLES_MAX = 56;
+const SESSION_ROUNDS_MAX = 32;
+
+function ml(ul) {
+  return (ul / 1000).toFixed(1);
+}
+
+function createGame({ seed = 1, level = 0, demo = false } = {}) {
+  if (!Number.isInteger(level) || level < 0 || level >= LEVEL_TABLE.length) {
+    throw new Error(`core init rejected level ${level}`);
+  }
+  const g = {
+    demo,
+    eventCode: EVENT.NONE,
+    frameCount: 0,
+    kernel: null,
+    lastLetdownCount: 0,
+    levelIdx: level,
+    lifetime: { bestUl: 0, letdowns: 0, rounds: 0, yieldUl: 0 },
+    menuCursor: 0,
+    motes: [],
+    pendingMethod: -1,
+    roundRecorded: true,
+    samples: [],
+    screenNow: SCREEN.GATE,
+    screenSteps: 0,
+    seed: seed >>> 0,
+    sessionChart: [],
+    settings: { textLarge: false, unhurried: false },
+    titleLevel: level,
+  };
+  // Ambient motes: positions from the seeded stream, generated once.
+  let st = g.seed;
+  for (let i = 0; i < 24; i++) {
+    st = (st + 0x9e3779b9) >>> 0;
+    let z = Math.imul(st ^ (st >>> 16), 0x21f0aaad) >>> 0;
+    z = Math.imul(z ^ (z >>> 15), 0x735a2d97) >>> 0;
+    z = (z ^ (z >>> 15)) >>> 0;
+    const x = 20 + (z % 920);
+    st = (st + 0x9e3779b9) >>> 0;
+    let w = Math.imul(st ^ (st >>> 16), 0x21f0aaad) >>> 0;
+    w = Math.imul(w ^ (w >>> 15), 0x735a2d97) >>> 0;
+    w = (w ^ (w >>> 15)) >>> 0;
+    g.motes.push([x, 20 + (w % 920)]);
+  }
+
+  function textSize(base) {
+    return g.settings.textLarge ? Math.round(base * 1.25) : base;
+  }
+
+  function setScreen(s) {
+    g.screenNow = s;
+    g.screenSteps = 0;
+    g.menuCursor = 0;
+  }
+
+  function startLevel(l) {
+    if (!Number.isInteger(l) || l < 0 || l >= LEVEL_TABLE.length) {
+      throw new Error(`core start_level rejected ${l}`);
+    }
+    g.levelIdx = l;
+    g.kernel = createState(l);
+    if (g.settings.unhurried) {
+      // Accessibility: an unhurried round is a longer round. The
+      // kernel's level block is data; the bridge adjusts the clock
+      // before the first step and the record says so.
+      const lp = g.kernel.level;
+      g.kernel.level = { ...lp, timeSteps: Math.round(lp.timeSteps * 1.5) };
+      g.kernel.roundStepsLeft = g.kernel.level.timeSteps;
+    }
+    g.lastLetdownCount = 0;
+    g.pendingMethod = -1;
+    g.roundRecorded = false;
+    g.samples = [0];
+    g.eventCode = EVENT.START;
+    setScreen(SCREEN.PLAY);
+  }
+
+  function recordRound() {
+    const k = g.kernel;
+    const rec = {
+      byMethodUl: [...k.yieldByMethodUl],
+      distinct: [0, 1, 2, 3].filter((m) => ((k.distinctMask >> m) & 1) === 1).length,
+      letdowns: k.letdownCount,
+      level: g.levelIdx,
+      stepsUsed: k.roundStepsElapsed,
+      unhurried: g.settings.unhurried,
+      won: k.phase === PHASE_WON,
+      yieldUl: k.yieldTotalUl,
+    };
+    g.sessionChart.push(rec);
+    if (g.sessionChart.length > SESSION_ROUNDS_MAX) g.sessionChart.shift();
+    g.roundRecorded = true;
+    return rec;
+  }
+
+  // The demo policy: a scripted maid's hand inside the game layer.
+  // Ride each let-down out; between let-downs, work the circuit —
+  // advance whenever the active method runs hot — and address the
+  // fuller side with the pinch.
+  function demoPolicy() {
+    const k = g.kernel;
+    let methodIn = -1;
+    let sideIn = -1;
+    if (k.letdownStepsLeft === 0 && k.heatMilli[k.method] >= 700) {
+      methodIn = (k.method + 1) % 4;
+    }
+    if (k.method === 0 || methodIn === 0) {
+      sideIn = k.volumeUl[0] >= k.volumeUl[1] ? 0 : 1;
+    }
+    return { held: true, methodIn, sideIn };
+  }
+
+  function stepPlay(bits) {
+    const k = g.kernel;
+    let held = (bits & INPUT.tap) !== 0;
+    let methodIn = g.pendingMethod;
+    let sideIn = -1;
+    g.pendingMethod = -1;
+    for (let m = 0; m < 4; m++) {
+      if (bits & METHOD_BITS[m]) methodIn = m;
+    }
+    if (bits & INPUT.side) {
+      sideIn = k.side === 0 ? 1 : 0;
+      g.eventCode = EVENT.SIDE;
+    }
+    if (g.demo) {
+      const p = demoPolicy();
+      held = p.held;
+      if (p.methodIn >= 0) methodIn = p.methodIn;
+      if (p.sideIn >= 0) sideIn = p.sideIn;
+    }
+    const prevMethod = k.method;
+    stepState(k, held, methodIn, sideIn);
+    if (k.method !== prevMethod) g.eventCode = EVENT.SWITCH;
+    if (k.letdownCount !== g.lastLetdownCount) {
+      g.lastLetdownCount = k.letdownCount;
+      g.eventCode = EVENT.LETDOWN;
+    }
+    if (k.roundStepsElapsed % SAMPLE_EVERY_STEPS === 0) {
+      g.samples.push(k.yieldTotalUl);
+      if (g.samples.length > SAMPLES_MAX) g.samples.shift();
+    }
+    if (k.phase !== 0 && !g.roundRecorded) {
+      recordRound();
+      if (k.phase === PHASE_WON) {
+        g.eventCode = EVENT.VICTORY;
+        setScreen(SCREEN.VICTORY);
+      } else if (k.phase === PHASE_LOST) {
+        g.eventCode = EVENT.GAMEOVER;
+        setScreen(SCREEN.GAMEOVER);
+      }
+    }
+  }
+
+  function stepMenu(bits, rows, onConfirm) {
+    if (bits & INPUT.down) g.menuCursor = Math.min(g.menuCursor + 1, rows - 1);
+    if (bits & INPUT.up) g.menuCursor = Math.max(g.menuCursor - 1, 0);
+    if (bits & (INPUT.confirm | INPUT.tap)) onConfirm(g.menuCursor);
+  }
+
+  function step(bits) {
+    g.eventCode = EVENT.NONE;
+    g.frameCount++;
+    g.screenSteps++;
+    switch (g.screenNow) {
+      case SCREEN.GATE:
+        if (g.demo && g.screenSteps > 37) setScreen(SCREEN.TITLE);
+        else if (bits & (INPUT.confirm | INPUT.tap)) setScreen(SCREEN.TITLE);
+        break;
+      case SCREEN.TITLE:
+        if (g.demo && g.screenSteps > 44) { startLevel(g.titleLevel); break; }
+        stepMenu(bits, 5, (row) => {
+          if (row === 0) startLevel(g.titleLevel);
+          else if (row === 1) setScreen(SCREEN.HOWTO);
+          else if (row === 2) setScreen(SCREEN.CHART);
+          else if (row === 3) setScreen(SCREEN.SETTINGS);
+          else g.titleLevel = (g.titleLevel + 1) % LEVEL_TABLE.length;
+        });
+        break;
+      case SCREEN.HOWTO:
+      case SCREEN.CHART:
+        if (bits & (INPUT.back | INPUT.confirm)) setScreen(SCREEN.TITLE);
+        break;
+      case SCREEN.PLAY:
+        if (bits & INPUT.pause) { setScreen(SCREEN.PAUSE); break; }
+        stepPlay(bits);
+        break;
+      case SCREEN.PAUSE:
+        if (bits & INPUT.pause) { setScreen(SCREEN.PLAY); break; }
+        stepMenu(bits, 3, (row) => {
+          if (row === 0) setScreen(SCREEN.PLAY);
+          else if (row === 1) startLevel(g.levelIdx);
+          else setScreen(SCREEN.TITLE);
+        });
+        break;
+      case SCREEN.SETTINGS:
+        if (bits & INPUT.back) { setScreen(SCREEN.TITLE); break; }
+        stepMenu(bits, 3, (row) => {
+          if (row === 0) g.settings.unhurried = !g.settings.unhurried;
+          else if (row === 1) g.settings.textLarge = !g.settings.textLarge;
+          else setScreen(SCREEN.TITLE);
+        });
+        break;
+      case SCREEN.VICTORY:
+        if (g.demo && g.screenSteps > 94) { setScreen(SCREEN.TITLE); break; }
+        if (bits & (INPUT.confirm | INPUT.tap)) setScreen(SCREEN.CHART);
+        else if (bits & INPUT.back) setScreen(SCREEN.TITLE);
+        break;
+      case SCREEN.GAMEOVER:
+        if (g.demo && g.screenSteps > 94) { setScreen(SCREEN.TITLE); break; }
+        if (bits & (INPUT.confirm | INPUT.tap | INPUT.back)) setScreen(SCREEN.TITLE);
+        break;
+      default:
+        break;
+    }
+  }
+
+  // --- persistence bridges (the shell owns localStorage) ---
+  function applySettings(unhurried, textLarge) {
+    g.settings.unhurried = !!unhurried;
+    g.settings.textLarge = !!textLarge;
+  }
+  function settingsBits() {
+    return (g.settings.unhurried ? 1 : 0) | (g.settings.textLarge ? 2 : 0);
+  }
+  function applyArchive(yieldUl, letdowns, rounds, bestUl) {
+    g.lifetime = {
+      bestUl: Math.max(0, bestUl | 0),
+      letdowns: Math.max(0, letdowns | 0),
+      rounds: Math.max(0, rounds | 0),
+      yieldUl: Math.max(0, yieldUl | 0),
+    };
+  }
+  function archiveBits() {
+    return { ...g.lifetime };
+  }
+  function sessionChart() {
+    return g.sessionChart.map((r) => ({ ...r, byMethodUl: [...r.byMethodUl] }));
+  }
+  function lastRound() {
+    const r = g.sessionChart[g.sessionChart.length - 1];
+    return r ? { ...r, byMethodUl: [...r.byMethodUl] } : null;
+  }
+
+  // --- draw list ---
+  function frame() {
+    const ops = [];
+    const R = (x, y, w, h, c) => ops.push(["r", x, y, w, h, c]);
+    const C = (x, y, r, c) => ops.push(["c", x, y, r, c]);
+    const L = (x1, y1, x2, y2, w, c) => ops.push(["l", x1, y1, x2, y2, w, c]);
+    const P = (x1, y1, x2, y2, x3, y3, c) => ops.push(["p", x1, y1, x2, y2, x3, y3, c]);
+    const T = (x, y, size, c, s) => ops.push(["t", x, y, textSize(size), c, s]);
+    R(0, 0, 960, 960, 0);
+    for (let i = 0; i < g.motes.length; i++) {
+      if (((g.frameCount >> 4) + i) % 5 === 0) continue;
+      C(g.motes[i][0], g.motes[i][1], 2, 7);
+    }
+    switch (g.screenNow) {
+      case SCREEN.GATE: drawGate(T); break;
+      case SCREEN.TITLE: drawTitle(T, R); break;
+      case SCREEN.HOWTO: drawHowto(T); break;
+      case SCREEN.PLAY: drawPlay({ C, L, P, R, T }); break;
+      case SCREEN.PAUSE: drawPlay({ C, L, P, R, T }); drawPause(T, R); break;
+      case SCREEN.SETTINGS: drawSettings(T); break;
+      case SCREEN.VICTORY: drawEnd(T, true); break;
+      case SCREEN.GAMEOVER: drawEnd(T, false); break;
+      case SCREEN.CHART: drawChart(T, R); break;
+      default: break;
+    }
+    return { palette: PALETTE, ops };
+  }
+
+  function drawGate(T) {
+    T(240, 250, 64, 1, "MILKMAID");
+    T(240, 350, 26, 6, "18+ ONLY BEYOND THIS GATE");
+    T(240, 410, 20, 3, "AN ADULT GAME OF SERVICE, BY NICE THOUGHTS RANCH.");
+    T(240, 445, 20, 3, "LACTATION AND MAID SERVICE, PRESENTED IN THE ABSTRACT.");
+    T(240, 480, 20, 3, "EVERYTHING IS SYMBOLIC. NO ONE IS REAL.");
+    T(240, 560, 20, 8, "PRESS ENTER OR TAP TO CONFIRM YOU ARE 18+");
+  }
+
+  function menuRows(T, x, y0, dy, rows, cursor) {
+    rows.forEach((label, i) => {
+      const y = y0 + i * dy;
+      if (i === cursor) T(x - 40, y, 34, 1, ">");
+      T(x, y, 34, i === cursor ? 1 : 6, label);
+    });
+  }
+
+  function drawTitle(T, R) {
+    T(240, 110, 72, 1, "MILKMAID");
+    T(240, 205, 20, 3, "MILK, MADE SERVICE - ALMA KEEPS THE CHART");
+    menuRows(T, 240, 320, 62, ["BEGIN SERVICE", "HOW TO SERVE", "THE CHART", "SETTINGS"], g.menuCursor);
+    const y = 320 + 4 * 62;
+    if (g.menuCursor === 4) T(200, y, 34, 1, ">");
+    const lp = LEVEL_TABLE[g.titleLevel];
+    T(240, y, 34, g.menuCursor === 4 ? 1 : 6, `ROUND: ${lp.name}`);
+    T(220, y + 46, 20, 3, `TARGET ${ml(lp.targetUl)} ML - ${(lp.timeSteps * 16 / 1000) | 0}S - CIRCUIT ${lp.requiredDistinct === 0 ? "FREE" : lp.requiredDistinct + " METHODS"} - TAP ROW TO CHANGE`);
+    if (g.lifetime.rounds > 0) {
+      T(240, 700, 20, 8, `THE ARCHIVE: ${g.lifetime.rounds} ROUNDS - ${ml(g.lifetime.yieldUl)} ML - ${g.lifetime.letdowns} LET-DOWNS`);
+    }
+    T(240, 880, 20, 7, "ARROWS CHOOSE - ENTER CONFIRMS");
+    void R;
+  }
+
+  function drawHowto(T) {
+    T(110, 100, 40, 1, "HOW TO SERVE");
+    const lines = [
+      "HOLD (OR HOLD SPACE) TO WORK THE ACTIVE METHOD.",
+      "PRESSURE BUILDS. AROUSAL FOLLOWS IT UPWARD.",
+      "AT THE THRESHOLD SHE LETS DOWN - AND THE FLOW",
+      "LANDS IN WHICHEVER METHOD IS ACTIVE. THE CHART",
+      "NAMES IT. THERE IS NO OTHER WAY IT IS COUNTED.",
+      "",
+      "KEYS 1-4 SWITCH THE CIRCUIT: PINCH, CLAMPS,",
+      "PUMP SUCTION, CUPS. TAB ADDRESSES THE OTHER SIDE.",
+      "A METHOD WORKED TOO LONG GOES DULL - WATCH ITS",
+      "HEAT. ROTATE. LATER ROUNDS REQUIRE THE CIRCUIT:",
+      "LET-DOWNS LANDED WITH 3, THEN ALL 4, METHODS.",
+      "",
+      "HER BODY REFILLS AND GROWS: EVERY LET-DOWN ADDS",
+      "CAPACITY, AND THE CHART KEEPS ALL OF IT.",
+    ];
+    lines.forEach((s, i) => T(110, 190 + i * 44, 20, 6, s));
+    T(110, 850, 22, 8, "ENTER OR ESC TO RETURN");
+  }
+
+  function drawSettings(T) {
+    T(240, 160, 44, 1, "SETTINGS");
+    const rows = [
+      `UNHURRIED ROUNDS: ${g.settings.unhurried ? "ON" : "OFF"}`,
+      `TEXT: ${g.settings.textLarge ? "LARGE" : "NORMAL"}`,
+      "BACK",
+    ];
+    menuRows(T, 240, 300, 70, rows, g.menuCursor);
+    T(240, 560, 20, 3, "SETTINGS ARE NEVER GATED. THEY APPLY AT ONCE");
+    T(240, 590, 20, 3, "AND ARE REMEMBERED BETWEEN VISITS.");
+  }
+
+  function drawPause(T, R) {
+    R(230, 260, 500, 400, 9);
+    T(330, 300, 44, 1, "HELD");
+    menuRows(T, 340, 400, 64, ["RESUME", "RESTART ROUND", "QUIT TO TITLE"], g.menuCursor);
+  }
+
+  function drawPlay({ C, L, P, R, T }) {
+    const k = g.kernel;
+    if (!k) return;
+    const lp = k.level;
+    // Header: the round, and the clock, counted down in the open.
+    T(36, 28, 26, 6, LEVEL_TABLE[g.levelIdx].name);
+    T(36, 62, 20, 3, "MILK, MADE SERVICE");
+    const secsLeft = Math.ceil((k.roundStepsLeft * 16) / 1000);
+    T(700, 20, 84, secsLeft <= 15 ? 1 : 6, String(secsLeft));
+    T(706, 8, 18, 3, "SECONDS OF SERVICE");
+    // Yield target bar.
+    T(36, 118, 24, 1, `YIELD ${ml(k.yieldTotalUl)} / ${ml(lp.targetUl)} ML`);
+    R(36, 152, 888, 16, 9);
+    R(36, 152, Math.min(888, Math.round((888 * k.yieldTotalUl) / lp.targetUl)), 16, 1);
+    // The circuit requirement, as pips.
+    if (lp.requiredDistinct > 0) {
+      T(560, 118, 22, 3, "CIRCUIT");
+      for (let m = 0; m < 4; m++) {
+        const done = ((k.distinctMask >> m) & 1) === 1;
+        C(716 + m * 34, 130, 11, done ? 1 : 7);
+      }
+    }
+    drawTank({ C, L, R, T }, 0, 150);
+    drawTank({ C, L, R, T }, 1, 590);
+    drawGauges({ L, R, T });
+    // Let-down banner: the culmination, named.
+    if (k.letdownStepsLeft > 0) {
+      T(268, 226, 34, 8, `LET-DOWN - ${METHOD_FULL_NAMES[k.lastLetdownMethod]}`);
+      L(370, 420, 460, 640, 3, 1);
+      L(590, 420, 500, 640, 3, 1);
+    } else if (k.lastLetdownMethod >= 0) {
+      T(36, 226, 20, 3, `LAST LET-DOWN LANDED IN: ${METHOD_FULL_NAMES[k.lastLetdownMethod]} (X${k.letdownCount})`);
+    }
+    drawMethodRow({ L, R, T });
+    drawTimeline({ L, R, T });
+    T(36, 922, 18, 7, "HOLD TO SERVE - 1-4 METHODS - TAB SIDE - P PAUSE");
+    void P;
+  }
+
+  function drawTank({ C, L, R, T }, side, x) {
+    const k = g.kernel;
+    const y = 300, w = 220, h = 300;
+    const frac = k.capacityUl[side] > 0 ? k.volumeUl[side] / k.capacityUl[side] : 0;
+    R(x, y + h - Math.round(h * frac), w, Math.round(h * frac), 2);
+    L(x, y, x + w, y, 2, 6);
+    L(x, y, x, y + h, 2, 6);
+    L(x + w, y, x + w, y + h, 2, 6);
+    L(x, y + h, x + w, y + h, 2, 6);
+    T(x + 52, y + h + 12, 22, 6, side === 0 ? "LEFT" : "RIGHT");
+    T(x + 8, y + h + 44, 20, 3, `${ml(k.volumeUl[side])} / ${ml(k.capacityUl[side])} ML`);
+    if (k.side === side) {
+      // Dotted ring of attention around the addressed side.
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 + g.frameCount * 0.01;
+        C(x + w / 2 + Math.cos(a) * (w / 2 + 18), y + h / 2 + Math.sin(a) * (h / 2 + 18), 4, 1);
+      }
+      T(x + 30, y - 32, 20, 1, "IN SERVICE");
+    }
+  }
+
+  function drawGauges({ L, R, T }) {
+    const k = g.kernel;
+    const y = 300, h = 300;
+    // Pressure (rose), arousal (gold) with its threshold tick.
+    R(448, y + h - Math.round((h * k.pressureMilli) / 1000), 26, Math.round((h * k.pressureMilli) / 1000), 5);
+    L(448, y, 448, y + h, 1, 7);
+    L(474, y, 474, y + h, 1, 7);
+    T(410, y + h + 12, 16, 3, "PRESS");
+    R(496, y + h - Math.round((h * k.arousalMilli) / 1000), 26, Math.round((h * k.arousalMilli) / 1000), 8);
+    L(496, y, 496, y + h, 1, 7);
+    L(522, y, 522, y + h, 1, 7);
+    const th = k.method === 1 ? 750 : 850;
+    const ty = y + h - Math.round((h * th) / 1000);
+    L(488, ty, 530, ty, 3, 1);
+    T(492, y + h + 12, 16, 3, "RISE");
+  }
+
+  function drawMethodRow({ L, R, T }) {
+    const k = g.kernel;
+    for (let m = 0; m < 4; m++) {
+      const x = 36 + m * 228;
+      const y = 668;
+      const active = k.method === m;
+      R(x, y, 204, 96, active ? 4 : 9);
+      if (active) {
+        L(x, y, x + 204, y, 3, 1);
+        L(x, y + 96, x + 204, y + 96, 3, 1);
+      }
+      T(x + 14, y + 12, 24, active ? 1 : 6, METHOD_NAMES[m]);
+      // Heat: the dullness of a method worked too long.
+      R(x + 14, y + 56, 176, 10, 0);
+      R(x + 14, y + 56, Math.round((176 * k.heatMilli[m]) / 1000), 10, k.heatMilli[m] >= 850 ? 1 : 5);
+      T(x + 14, y + 70, 16, 3, `X${k.letdownsByMethod[m]} LET-DOWNS`);
+    }
+  }
+
+  function drawTimeline({ L, R, T }) {
+    const k = g.kernel;
+    T(36, 792, 20, 3, "THE FLUID TIMELINE - YIELD AS IT CAME");
+    T(620, 792, 20, 8, `GROWN +${ml(k.growthTotalUl)} ML`);
+    const x0 = 36, y0 = 884, w = 888, h = 64;
+    L(x0, y0, x0 + w, y0, 1, 7);
+    const n = g.samples.length;
+    if (n > 1) {
+      const peak = Math.max(1, g.samples[n - 1]);
+      for (let i = 1; i < n; i++) {
+        const xa = x0 + Math.round((w * (i - 1)) / (SAMPLES_MAX - 1));
+        const xb = x0 + Math.round((w * i) / (SAMPLES_MAX - 1));
+        const ya = y0 - Math.round((h * g.samples[i - 1]) / peak);
+        const yb = y0 - Math.round((h * g.samples[i]) / peak);
+        L(xa, ya, xb, yb, 2, 1);
+      }
+    }
+    void R;
+  }
+
+  function roundRecordLines(T, rec, x, y) {
+    const lp = LEVEL_TABLE[rec.level];
+    T(x, y, 20, 6, `${lp.name} - ${rec.won ? "SERVED IN FULL" : "UNFINISHED"}`);
+    T(x, y + 42, 20, 3, `YIELD ${ml(rec.yieldUl)} ML - ${rec.letdowns} LET-DOWNS - ${(rec.stepsUsed * 16 / 1000).toFixed(0)}S OF SERVICE${rec.unhurried ? " - UNHURRIED" : ""}`);
+    const parts = METHOD_NAMES.map((n, m) => `${n} ${ml(rec.byMethodUl[m])}`);
+    T(x, y + 78, 20, 3, `BY METHOD: ${parts.join(" - ")}`);
+  }
+
+  function drawEnd(T, won) {
+    const rec = g.sessionChart[g.sessionChart.length - 1];
+    if (won) {
+      T(180, 220, 52, 1, "SERVICE COMPLETE");
+      T(180, 300, 20, 6, "THE ROUND IS SERVED, AND THE CHART KEEPS IT.");
+    } else {
+      T(180, 220, 44, 6, "THE ROUND SLIPS AWAY");
+      T(180, 300, 20, 3, "THE SERVICE WAS REAL. THE TARGET WAS NOT MET.");
+    }
+    if (rec) roundRecordLines(T, rec, 180, 400);
+    T(180, 640, 20, 8, won ? "ENTER: READ THE CHART - ESC: TITLE" : "ENTER OR TAP TO RETURN");
+  }
+
+  function drawChart(T, R) {
+    T(80, 70, 44, 1, "THE CHART");
+    T(80, 130, 20, 3, "GROWTH AND YIELD ARCHIVE - THE PUMP'S FULL CHARTING");
+    T(80, 180, 20, 6, `LIFETIME: ${g.lifetime.rounds} ROUNDS - ${ml(g.lifetime.yieldUl)} ML - ${g.lifetime.letdowns} LET-DOWNS - BEST ${ml(g.lifetime.bestUl)} ML`);
+    T(80, 240, 24, 1, "THIS SESSION");
+    const rounds = [...g.sessionChart].reverse().slice(0, 5);
+    if (rounds.length === 0) T(80, 290, 20, 3, "NO ROUNDS SERVED YET. THE CHART WAITS.");
+    rounds.forEach((rec, i) => {
+      const y = 290 + i * 106;
+      T(80, y, 22, rec.won ? 1 : 3, `R${g.sessionChart.length - i} - ${LEVEL_TABLE[rec.level].name}`);
+      T(80, y + 32, 20, 6, `${ml(rec.yieldUl)} ML - ${rec.letdowns} LET-DOWNS - CIRCUIT ${rec.distinct}/4${rec.unhurried ? " - UNHURRIED" : ""}`);
+      const peak = Math.max(1, ...rec.byMethodUl);
+      rec.byMethodUl.forEach((v, m) => {
+        R(80 + m * 210, y + 66, Math.round((180 * v) / peak), 12, m === rec.byMethodUl.indexOf(peak) ? 1 : 4);
+      });
+    });
+    T(80, 880, 20, 7, "ENTER OR ESC TO RETURN");
+  }
+
+  function frameText() {
+    const { ops } = frame();
+    return ops.map((op) => {
+      if (op[0] === "t") return `t ${op[1]} ${op[2]} ${op[3]} ${op[4]} ${op[5]}`;
+      return op.join(" ");
+    }).join("\n");
+  }
+
+  return {
+    applyArchive,
+    applySettings,
+    archiveBits,
+    event: () => g.eventCode,
+    frame,
+    frameText,
+    lastRound,
+    levelIdx: () => g.levelIdx,
+    screen: () => g.screenNow,
+    sessionChart,
+    settingsBits,
+    startLevel,
+    step,
+    // Test-facing surface (the node harnesses use the same doors).
+    kernelState: () => g.kernel,
+    setPendingMethod: (m) => { g.pendingMethod = m; },
+  };
+}
+
+
+const params = new URLSearchParams(location.search);
+const demoLevel = params.has("demo") ? Number(params.get("demo")) : null;
+const seed = params.has("seed") ? Number(params.get("seed")) : 20264;
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const game = createGame({
+  seed,
+  level: demoLevel ?? 0,
+  demo: demoLevel !== null,
+});
+if (demoLevel !== null) game.startLevel(demoLevel);
+
+// --- persistence: settings and the chart archive (lifetime rounds,
+// yield, let-downs, best round) live in localStorage; the core restores
+// them through its bridges at boot. A round itself is one sitting. ---
+const LS_KEY = "milkmaid-save-v1";
+let save = { unhurried: false, textLarge: false, yieldUl: 0, letdowns: 0, rounds: 0, bestUl: 0, done: [false, false, false] };
+try { save = { ...save, ...JSON.parse(localStorage.getItem(LS_KEY) ?? "{}") }; } catch { /* fresh save */ }
+game.applySettings(save.unhurried, save.textLarge);
+game.applyArchive(save.yieldUl, save.letdowns, save.rounds, save.bestUl);
+let lastSettingsBits = game.settingsBits();
+let foldedRounds = 0;
+function persist() { try { localStorage.setItem(LS_KEY, JSON.stringify(save)); } catch { /* private mode */ } }
+function noteScreen() {
+  const bits = game.settingsBits();
+  if (bits !== lastSettingsBits) {
+    lastSettingsBits = bits;
+    save.unhurried = (bits & 1) !== 0;
+    save.textLarge = (bits & 2) !== 0;
+    persist();
+  }
+  // Fold any newly recorded rounds into the archive, exactly once each.
+  const chart = game.sessionChart();
+  while (foldedRounds < chart.length) {
+    const rec = chart[foldedRounds];
+    foldedRounds++;
+    save.rounds += 1;
+    save.yieldUl += rec.yieldUl;
+    save.letdowns += rec.letdowns;
+    if (rec.yieldUl > save.bestUl) save.bestUl = rec.yieldUl;
+    if (rec.won) save.done[rec.level] = true;
+    game.applyArchive(save.yieldUl, save.letdowns, save.rounds, save.bestUl);
+    persist();
+    renderRecords();
+  }
+}
+function renderRecords() {
+  const el = document.getElementById("records");
+  if (!el) return;
+  const doneCount = save.done.filter(Boolean).length;
+  el.textContent = `The chart so far: ${save.rounds} rounds · ${(save.yieldUl / 1000).toFixed(1)} ml · ${save.letdowns} let-downs · rounds served ${doneCount}/3`;
+}
+renderRecords();
+
+// --- input: HOLDING is the service. A press also confirms menus; the
+// core reads the bits each screen cares about. ---
+let pendingInput = 0;
+let held = false;
+function press(bits) { pendingInput |= bits; ensureAudio(); }
+canvas.addEventListener("pointerdown", (e) => { held = true; press(INPUT.tap | INPUT.confirm); e.preventDefault(); });
+addEventListener("pointerup", () => { held = false; });
+addEventListener("pointercancel", () => { held = false; });
+addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    if (!e.repeat) { held = true; press(INPUT.tap | INPUT.confirm); }
+    e.preventDefault();
+  }
+  else if (e.repeat) return;
+  else if (e.code === "Enter") press(INPUT.confirm);
+  else if (e.code === "ArrowUp") press(INPUT.up);
+  else if (e.code === "ArrowDown") press(INPUT.down);
+  else if (e.code === "Tab" || e.code === "KeyQ") { press(INPUT.side); e.preventDefault(); }
+  else if (e.code === "Digit1") press(INPUT.mPinch);
+  else if (e.code === "Digit2") press(INPUT.mClamps);
+  else if (e.code === "Digit3") press(INPUT.mPump);
+  else if (e.code === "Digit4") press(INPUT.mCups);
+  else if (e.code === "KeyP") press(INPUT.pause);
+  else if (e.code === "Escape") press(INPUT.pause | INPUT.back);
+  else if (e.code === "Backspace") press(INPUT.back);
+});
+addEventListener("keyup", (e) => { if (e.code === "Space") held = false; });
+
+// --- audio: generated WebAudio, created only after a user gesture, and
+// only ever in response to core events that input caused. ---
+let audio = null;
+function ensureAudio() {
+  if (audio) { if (audio.state === "suspended") audio.resume(); return; }
+  try {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+  } catch { audio = null; }
+}
+function tone(freq, dur, type = "sine", gain = 0.12, when = 0) {
+  if (!audio) return;
+  const t0 = audio.currentTime + when;
+  const osc = audio.createOscillator();
+  const g = audio.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  g.gain.setValueAtTime(gain, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(g).connect(audio.destination);
+  osc.start(t0); osc.stop(t0 + dur);
+}
+function sonify(eventCode) {
+  switch (eventCode) {
+    case 1: tone(784, 0.14, "sine", 0.1); tone(988, 0.22, "sine", 0.09, 0.1); break;   // let-down
+    case 2: tone(1200, 0.04, "square", 0.04); break;                                    // method switch
+    case 3: tone(523, 0.16); tone(659, 0.16, "sine", 0.12, 0.12); tone(784, 0.34, "sine", 0.12, 0.24); break; // served
+    case 4: tone(220, 0.3, "triangle", 0.1); tone(147, 0.45, "triangle", 0.1, 0.2); break; // slipped away
+    case 5: tone(660, 0.05, "sine", 0.06); break;                                       // side switch
+    case 6: tone(392, 0.12, "triangle", 0.1); break;                                    // round begins
+  }
+}
+
+// --- painting: the core's draw list, interpreted on canvas. ---
+function paint(frame) {
+  for (const op of frame.ops) {
+    const kind = op[0];
+    const ci = kind === "t" ? op[4] : op[op.length - 1];
+    ctx.fillStyle = frame.palette[ci] ?? "#ff2e88";
+    ctx.strokeStyle = ctx.fillStyle;
+    if (kind === "r") ctx.fillRect(op[1], op[2], op[3], op[4]);
+    else if (kind === "c") { ctx.beginPath(); ctx.arc(op[1], op[2], op[3], 0, 6.2832); ctx.fill(); }
+    else if (kind === "l") {
+      ctx.lineWidth = op[5]; ctx.beginPath(); ctx.moveTo(op[1], op[2]); ctx.lineTo(op[3], op[4]); ctx.stroke();
+    } else if (kind === "p") {
+      ctx.beginPath(); ctx.moveTo(op[1], op[2]); ctx.lineTo(op[3], op[4]); ctx.lineTo(op[5], op[6]);
+      ctx.closePath(); ctx.fill();
+    } else if (kind === "t") {
+      ctx.font = `${op[3]}px ui-monospace, Menlo, monospace`;
+      ctx.textBaseline = "top";
+      ctx.fillText(op[5], op[1], op[2]);
+    }
+  }
+}
+
+// --- fixed-step loop: 16 ms steps, paint the newest frame. ---
+let acc = 0;
+let last = performance.now();
+function loop(now) {
+  acc += Math.min(now - last, 250);
+  last = now;
+  let stepped = false;
+  while (acc >= 16) {
+    const bits = pendingInput | (held ? INPUT.tap : 0);
+    pendingInput = 0;
+    game.step(bits);
+    const ev = game.event();
+    if (ev !== 0) sonify(ev);
+    acc -= 16;
+    stepped = true;
+  }
+  if (stepped) { noteScreen(); paint(game.frame()); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
 </body>
 </html>

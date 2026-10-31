@@ -1,0 +1,80 @@
+{
+ "schema": "milkmaid-tables/1",
+ "source": "src/kernel.mojo via core/kernel.mjs (checked copy); regenerate: node tools/gen-tables.mjs",
+ "units": "volumes microlitres (uL); rates uL per 16 ms step; pressure/arousal/heat milli-units 0..1000",
+ "methods": [
+  {
+   "index": 0,
+   "name": "PINCH",
+   "pressureRate": 16,
+   "trickleRateUl": 6,
+   "trickleThreshold": 600,
+   "trickleBothSides": false,
+   "letdownRateUl": 110,
+   "letdownBothSides": false,
+   "heatRate": 10
+  },
+  {
+   "index": 1,
+   "name": "CLAMPS",
+   "pressureRate": 22,
+   "trickleRateUl": 4,
+   "trickleThreshold": 500,
+   "trickleBothSides": true,
+   "letdownRateUl": 60,
+   "letdownBothSides": true,
+   "heatRate": 6
+  },
+  {
+   "index": 2,
+   "name": "PUMP SUCTION",
+   "pressureRate": 13,
+   "trickleRateUl": 10,
+   "trickleThreshold": 600,
+   "trickleBothSides": true,
+   "letdownRateUl": 88,
+   "letdownBothSides": true,
+   "heatRate": 9
+  },
+  {
+   "index": 3,
+   "name": "CUPS",
+   "pressureRate": 12,
+   "trickleRateUl": 7,
+   "trickleThreshold": 600,
+   "trickleBothSides": true,
+   "letdownRateUl": 66,
+   "letdownBothSides": true,
+   "heatRate": 7
+  }
+ ],
+ "levels": [
+  {
+   "index": 0,
+   "name": "MORNING ROUND",
+   "targetUl": 240000,
+   "timeSteps": 9375,
+   "heatBonus": 0,
+   "prodRateUl": 20,
+   "requiredDistinct": 0
+  },
+  {
+   "index": 1,
+   "name": "THE FULL CIRCUIT",
+   "targetUl": 420000,
+   "timeSteps": 11250,
+   "heatBonus": 0,
+   "prodRateUl": 22,
+   "requiredDistinct": 3
+  },
+  {
+   "index": 2,
+   "name": "MADE SERVICE, IN FULL",
+   "targetUl": 600000,
+   "timeSteps": 13125,
+   "heatBonus": 3,
+   "prodRateUl": 28,
+   "requiredDistinct": 4
+  }
+ ]
+}

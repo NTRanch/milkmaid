@@ -1,0 +1,2303 @@
+{
+ "schema": "milkmaid-kernel-vectors/1",
+ "source": "src/kernel.mojo (reference) via tools/gen-vectors.mjs (transcription driver)",
+ "tolerance": "exact — integer model, no tolerances",
+ "efficiency": [
+  {
+   "heat": 0,
+   "eff": 700
+  },
+  {
+   "heat": 150,
+   "eff": 850
+  },
+  {
+   "heat": 300,
+   "eff": 1000
+  },
+  {
+   "heat": 500,
+   "eff": 1000
+  },
+  {
+   "heat": 700,
+   "eff": 1000
+  },
+  {
+   "heat": 775,
+   "eff": 810
+  },
+  {
+   "heat": 850,
+   "eff": 620
+  },
+  {
+   "heat": 925,
+   "eff": 440
+  },
+  {
+   "heat": 1000,
+   "eff": 260
+  },
+  {
+   "heat": -5,
+   "eff": 700
+  },
+  {
+   "heat": 1200,
+   "eff": 260
+  }
+ ],
+ "rng": [
+  {
+   "seed": 12345,
+   "stream": [
+    3283241497,
+    613117429,
+    2940958500,
+    516375437,
+    3419379077,
+    2271415404,
+    1843856441,
+    3763538745
+   ]
+  },
+  {
+   "seed": 0,
+   "stream": [
+    1684164658,
+    3653269916,
+    2939563536,
+    2141751570
+   ]
+  }
+ ],
+ "scenarios": [
+  {
+   "id": "idle-100",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 100,
+     "held": false
+    }
+   ],
+   "results": [
+    {
+     "step": 100,
+     "digest": 2492303353,
+     "state": {
+      "arousalMilli": 0,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 0,
+      "roundStepsElapsed": 100,
+      "roundStepsLeft": 9275,
+      "side": 0,
+      "volumeUl": [
+       90000,
+       90000
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "pinch-build-200",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 200,
+     "held": true,
+     "method": 0,
+     "side": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 63,
+     "digest": 990032306,
+     "state": {
+      "arousalMilli": 486,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       630,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 63,
+      "roundStepsLeft": 9312,
+      "side": 0,
+      "volumeUl": [
+       89994,
+       90000
+      ],
+      "yieldByMethodUl": [
+       156,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 156
+     }
+    },
+    {
+     "step": 100,
+     "digest": 186154049,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       90350,
+       90000
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 350,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       1,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 225,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 100,
+      "roundStepsLeft": 9275,
+      "side": 0,
+      "volumeUl": [
+       89581,
+       90000
+      ],
+      "yieldByMethodUl": [
+       961,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 961
+     }
+    },
+    {
+     "step": 200,
+     "digest": 3657645169,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       90350,
+       90000
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 350,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       1,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 125,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 200,
+      "roundStepsLeft": 9175,
+      "side": 0,
+      "volumeUl": [
+       88781,
+       90000
+      ],
+      "yieldByMethodUl": [
+       3761,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 3761
+     }
+    }
+   ]
+  },
+  {
+   "id": "pump-marathon-1500",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 1500,
+     "held": true,
+     "method": 2
+    }
+   ],
+   "results": [
+    {
+     "step": 500,
+     "digest": 2137931039,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       90700,
+       90700
+      ],
+      "distinctMask": 4,
+      "growthTotalUl": 1400,
+      "heatMilli": [
+       0,
+       0,
+       1000,
+       0
+      ],
+      "lastLetdownMethod": 2,
+      "letdownCount": 2,
+      "letdownsByMethod": [
+       0,
+       0,
+       2,
+       0
+      ],
+      "letdownStepsLeft": 106,
+      "method": 2,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 500,
+      "roundStepsLeft": 8875,
+      "side": 0,
+      "volumeUl": [
+       89525,
+       89525
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       18056,
+       0
+      ],
+      "yieldTotalUl": 18056
+     }
+    },
+    {
+     "step": 1000,
+     "digest": 2424696325,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       91400,
+       91400
+      ],
+      "distinctMask": 4,
+      "growthTotalUl": 2800,
+      "heatMilli": [
+       0,
+       0,
+       1000,
+       0
+      ],
+      "lastLetdownMethod": 2,
+      "letdownCount": 4,
+      "letdownsByMethod": [
+       0,
+       0,
+       4,
+       0
+      ],
+      "letdownStepsLeft": 152,
+      "method": 2,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 1000,
+      "roundStepsLeft": 8375,
+      "side": 0,
+      "volumeUl": [
+       89845,
+       89845
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       37416,
+       0
+      ],
+      "yieldTotalUl": 37416
+     }
+    },
+    {
+     "step": 1500,
+     "digest": 2210541731,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       92100,
+       92100
+      ],
+      "distinctMask": 4,
+      "growthTotalUl": 4200,
+      "heatMilli": [
+       0,
+       0,
+       1000,
+       0
+      ],
+      "lastLetdownMethod": 2,
+      "letdownCount": 6,
+      "letdownsByMethod": [
+       0,
+       0,
+       6,
+       0
+      ],
+      "letdownStepsLeft": 198,
+      "method": 2,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 1500,
+      "roundStepsLeft": 7875,
+      "side": 0,
+      "volumeUl": [
+       90165,
+       90165
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       56776,
+       0
+      ],
+      "yieldTotalUl": 56776
+     }
+    }
+   ]
+  },
+  {
+   "id": "clamps-threshold-400",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 400,
+     "held": true,
+     "method": 1
+    }
+   ],
+   "results": [
+    {
+     "step": 60,
+     "digest": 4003676576,
+     "state": {
+      "arousalMilli": 582,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       360,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 1,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 60,
+      "roundStepsLeft": 9315,
+      "side": 0,
+      "volumeUl": [
+       89996,
+       89996
+      ],
+      "yieldByMethodUl": [
+       0,
+       250,
+       0,
+       0
+      ],
+      "yieldTotalUl": 250
+     }
+    },
+    {
+     "step": 61,
+     "digest": 3246517393,
+     "state": {
+      "arousalMilli": 598,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       366,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 1,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 61,
+      "roundStepsLeft": 9314,
+      "side": 0,
+      "volumeUl": [
+       89996,
+       89996
+      ],
+      "yieldByMethodUl": [
+       0,
+       258,
+       0,
+       0
+      ],
+      "yieldTotalUl": 258
+     }
+    },
+    {
+     "step": 400,
+     "digest": 152364847,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       90700,
+       90700
+      ],
+      "distinctMask": 2,
+      "growthTotalUl": 1400,
+      "heatMilli": [
+       0,
+       1000,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 1,
+      "letdownCount": 2,
+      "letdownsByMethod": [
+       0,
+       2,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 176,
+      "method": 1,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 400,
+      "roundStepsLeft": 8975,
+      "side": 0,
+      "volumeUl": [
+       88817,
+       88817
+      ],
+      "yieldByMethodUl": [
+       0,
+       15856,
+       0,
+       0
+      ],
+      "yieldTotalUl": 15856
+     }
+    }
+   ]
+  },
+  {
+   "id": "boundary-below-850",
+   "level": 0,
+   "init": {
+    "arousalMilli": 833,
+    "pressureMilli": 1000
+   },
+   "segments": [
+    {
+     "steps": 4,
+     "held": true,
+     "method": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 1,
+     "digest": 56350629,
+     "state": {
+      "arousalMilli": 849,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       10,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 1,
+      "roundStepsLeft": 9374,
+      "side": 0,
+      "volumeUl": [
+       89996,
+       90000
+      ],
+      "yieldByMethodUl": [
+       4,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 4
+     }
+    },
+    {
+     "step": 2,
+     "digest": 1816324264,
+     "state": {
+      "arousalMilli": 862,
+      "capacityUl": [
+       90350,
+       90000
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 350,
+      "heatMilli": [
+       20,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       1,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 239,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 2,
+      "roundStepsLeft": 9373,
+      "side": 0,
+      "volumeUl": [
+       89921,
+       90000
+      ],
+      "yieldByMethodUl": [
+       83,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 83
+     }
+    },
+    {
+     "step": 4,
+     "digest": 4167341580,
+     "state": {
+      "arousalMilli": 888,
+      "capacityUl": [
+       90350,
+       90000
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 350,
+      "heatMilli": [
+       40,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       1,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 237,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 4,
+      "roundStepsLeft": 9371,
+      "side": 0,
+      "volumeUl": [
+       89800,
+       90000
+      ],
+      "yieldByMethodUl": [
+       244,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 244
+     }
+    }
+   ]
+  },
+  {
+   "id": "boundary-clamps-750",
+   "level": 0,
+   "init": {
+    "arousalMilli": 733,
+    "pressureMilli": 1000
+   },
+   "segments": [
+    {
+     "steps": 4,
+     "held": true,
+     "method": 1
+    }
+   ],
+   "results": [
+    {
+     "step": 1,
+     "digest": 4264041172,
+     "state": {
+      "arousalMilli": 749,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       6,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 1,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 1,
+      "roundStepsLeft": 9374,
+      "side": 0,
+      "volumeUl": [
+       89998,
+       89998
+      ],
+      "yieldByMethodUl": [
+       0,
+       4,
+       0,
+       0
+      ],
+      "yieldTotalUl": 4
+     }
+    },
+    {
+     "step": 2,
+     "digest": 768157965,
+     "state": {
+      "arousalMilli": 762,
+      "capacityUl": [
+       90350,
+       90350
+      ],
+      "distinctMask": 2,
+      "growthTotalUl": 700,
+      "heatMilli": [
+       0,
+       12,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 1,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       0,
+       1,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 239,
+      "method": 1,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 2,
+      "roundStepsLeft": 9373,
+      "side": 0,
+      "volumeUl": [
+       89958,
+       89958
+      ],
+      "yieldByMethodUl": [
+       0,
+       88,
+       0,
+       0
+      ],
+      "yieldTotalUl": 88
+     }
+    },
+    {
+     "step": 4,
+     "digest": 2399887647,
+     "state": {
+      "arousalMilli": 788,
+      "capacityUl": [
+       90350,
+       90350
+      ],
+      "distinctMask": 2,
+      "growthTotalUl": 700,
+      "heatMilli": [
+       0,
+       24,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 1,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       0,
+       1,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 237,
+      "method": 1,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 4,
+      "roundStepsLeft": 9371,
+      "side": 0,
+      "volumeUl": [
+       89912,
+       89912
+      ],
+      "yieldByMethodUl": [
+       0,
+       260,
+       0,
+       0
+      ],
+      "yieldTotalUl": 260
+     }
+    }
+   ]
+  },
+  {
+   "id": "release-decay-100",
+   "level": 0,
+   "init": {
+    "arousalMilli": 800,
+    "pressureMilli": 900
+   },
+   "segments": [
+    {
+     "steps": 100,
+     "held": false
+    }
+   ],
+   "results": [
+    {
+     "step": 37,
+     "digest": 2907285479,
+     "state": {
+      "arousalMilli": 689,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 12,
+      "roundStepsElapsed": 37,
+      "roundStepsLeft": 9338,
+      "side": 0,
+      "volumeUl": [
+       90000,
+       90000
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 0
+     }
+    },
+    {
+     "step": 100,
+     "digest": 2469534301,
+     "state": {
+      "arousalMilli": 500,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 0,
+      "roundStepsElapsed": 100,
+      "roundStepsLeft": 9275,
+      "side": 0,
+      "volumeUl": [
+       90000,
+       90000
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "side-targeting-500",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 500,
+     "held": true,
+     "method": 0,
+     "side": 1
+    }
+   ],
+   "results": [
+    {
+     "step": 500,
+     "digest": 2801433617,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       90000,
+       90700
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 700,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 2,
+      "letdownsByMethod": [
+       2,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 98,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 500,
+      "roundStepsLeft": 8875,
+      "side": 1,
+      "volumeUl": [
+       90000,
+       87272
+      ],
+      "yieldByMethodUl": [
+       11270,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 11270
+     }
+    }
+   ]
+  },
+  {
+   "id": "heat-soak-1200",
+   "level": 2,
+   "segments": [
+    {
+     "steps": 1200,
+     "held": true,
+     "method": 0,
+     "side": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 76,
+     "digest": 2471117167,
+     "state": {
+      "arousalMilli": 694,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       988,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 76,
+      "roundStepsLeft": 13049,
+      "side": 0,
+      "volumeUl": [
+       89999,
+       90000
+      ],
+      "yieldByMethodUl": [
+       171,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 171
+     }
+    },
+    {
+     "step": 77,
+     "digest": 3816700437,
+     "state": {
+      "arousalMilli": 710,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 77,
+      "roundStepsLeft": 13048,
+      "side": 0,
+      "volumeUl": [
+       89999,
+       90000
+      ],
+      "yieldByMethodUl": [
+       172,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 172
+     }
+    },
+    {
+     "step": 1200,
+     "digest": 1391052529,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       91750,
+       90000
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 1750,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 5,
+      "letdownsByMethod": [
+       5,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 217,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 1200,
+      "roundStepsLeft": 11925,
+      "side": 0,
+      "volumeUl": [
+       91372,
+       90000
+      ],
+      "yieldByMethodUl": [
+       27836,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 27836
+     }
+    }
+   ]
+  },
+  {
+   "id": "rotation-circuit-2400",
+   "level": 1,
+   "segments": [
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 300,
+     "digest": 2900128397,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       90350,
+       90000
+      ],
+      "distinctMask": 1,
+      "growthTotalUl": 350,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": 0,
+      "letdownCount": 1,
+      "letdownsByMethod": [
+       1,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 25,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 300,
+      "roundStepsLeft": 10950,
+      "side": 0,
+      "volumeUl": [
+       88409,
+       90000
+      ],
+      "yieldByMethodUl": [
+       6561,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 6561
+     }
+    },
+    {
+     "step": 1200,
+     "digest": 1904742520,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       91750,
+       91400
+      ],
+      "distinctMask": 15,
+      "growthTotalUl": 3150,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       1000
+      ],
+      "lastLetdownMethod": 3,
+      "letdownCount": 5,
+      "letdownsByMethod": [
+       1,
+       1,
+       2,
+       1
+      ],
+      "letdownStepsLeft": 210,
+      "method": 3,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 1200,
+      "roundStepsLeft": 10050,
+      "side": 0,
+      "volumeUl": [
+       79146,
+       80715
+      ],
+      "yieldByMethodUl": [
+       6561,
+       17752,
+       20316,
+       20058
+      ],
+      "yieldTotalUl": 64687
+     }
+    },
+    {
+     "step": 2400,
+     "digest": 62130773,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       92800,
+       92800
+      ],
+      "distinctMask": 15,
+      "growthTotalUl": 5600,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       1000
+      ],
+      "lastLetdownMethod": 3,
+      "letdownCount": 9,
+      "letdownsByMethod": [
+       2,
+       2,
+       3,
+       2
+      ],
+      "letdownStepsLeft": 95,
+      "method": 3,
+      "phase": 0,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 2400,
+      "roundStepsLeft": 8850,
+      "side": 0,
+      "volumeUl": [
+       74032,
+       61677
+      ],
+      "yieldByMethodUl": [
+       20485,
+       37748,
+       43674,
+       39732
+      ],
+      "yieldTotalUl": 141639
+     }
+    }
+   ]
+  },
+  {
+   "id": "full-round-win",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 350,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 275,
+     "held": true,
+     "method": 2,
+     "side": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 4353,
+     "digest": 328112450,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       94900,
+       94900
+      ],
+      "distinctMask": 15,
+      "growthTotalUl": 9800,
+      "heatMilli": [
+       1000,
+       0,
+       0,
+       235
+      ],
+      "lastLetdownMethod": 3,
+      "letdownCount": 16,
+      "letdownsByMethod": [
+       4,
+       4,
+       3,
+       5
+      ],
+      "letdownStepsLeft": 39,
+      "method": 0,
+      "phase": 1,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 4353,
+      "roundStepsLeft": 5022,
+      "side": 1,
+      "volumeUl": [
+       55764,
+       49840
+      ],
+      "yieldByMethodUl": [
+       45564,
+       64332,
+       74138,
+       55986
+      ],
+      "yieldTotalUl": 240020
+     }
+    }
+   ]
+  },
+  {
+   "id": "circuit-win",
+   "level": 1,
+   "segments": [
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 150,
+     "held": true,
+     "method": 1,
+     "side": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 6985,
+     "digest": 4249327895,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       97700,
+       98050
+      ],
+      "distinctMask": 15,
+      "growthTotalUl": 15750,
+      "heatMilli": [
+       0,
+       0,
+       575,
+       595
+      ],
+      "lastLetdownMethod": 2,
+      "letdownCount": 26,
+      "letdownsByMethod": [
+       7,
+       7,
+       7,
+       5
+      ],
+      "letdownStepsLeft": 116,
+      "method": 3,
+      "phase": 1,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 6985,
+      "roundStepsLeft": 4265,
+      "side": 0,
+      "volumeUl": [
+       33845,
+       25136
+      ],
+      "yieldByMethodUl": [
+       72483,
+       111840,
+       131332,
+       104452
+      ],
+      "yieldTotalUl": 420107
+     }
+    }
+   ]
+  },
+  {
+   "id": "grand-win",
+   "level": 2,
+   "segments": [
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 1
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 3,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 0,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 1,
+     "side": 0
+    },
+    {
+     "steps": 300,
+     "held": true,
+     "method": 2,
+     "side": 0
+    },
+    {
+     "steps": 225,
+     "held": true,
+     "method": 3,
+     "side": 0
+    }
+   ],
+   "results": [
+    {
+     "step": 11700,
+     "digest": 3622582401,
+     "state": {
+      "arousalMilli": 997,
+      "capacityUl": [
+       102950,
+       103300
+      ],
+      "distinctMask": 15,
+      "growthTotalUl": 26250,
+      "heatMilli": [
+       0,
+       0,
+       1000,
+       0
+      ],
+      "lastLetdownMethod": 2,
+      "letdownCount": 43,
+      "letdownsByMethod": [
+       11,
+       11,
+       11,
+       10
+      ],
+      "letdownStepsLeft": 14,
+      "method": 2,
+      "phase": 1,
+      "pressureMilli": 1000,
+      "roundStepsElapsed": 11700,
+      "roundStepsLeft": 1425,
+      "side": 0,
+      "volumeUl": [
+       102339,
+       96519
+      ],
+      "yieldByMethodUl": [
+       113928,
+       150854,
+       190570,
+       144670
+      ],
+      "yieldTotalUl": 600022
+     }
+    }
+   ]
+  },
+  {
+   "id": "full-round-lose",
+   "level": 0,
+   "segments": [
+    {
+     "steps": 9375,
+     "held": false
+    }
+   ],
+   "results": [
+    {
+     "step": 9374,
+     "digest": 2256406267,
+     "state": {
+      "arousalMilli": 0,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 0,
+      "pressureMilli": 0,
+      "roundStepsElapsed": 9374,
+      "roundStepsLeft": 1,
+      "side": 0,
+      "volumeUl": [
+       90000,
+       90000
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 0
+     }
+    },
+    {
+     "step": 9375,
+     "digest": 3706138158,
+     "state": {
+      "arousalMilli": 0,
+      "capacityUl": [
+       90000,
+       90000
+      ],
+      "distinctMask": 0,
+      "growthTotalUl": 0,
+      "heatMilli": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "lastLetdownMethod": -1,
+      "letdownCount": 0,
+      "letdownsByMethod": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "letdownStepsLeft": 0,
+      "method": 0,
+      "phase": 2,
+      "pressureMilli": 0,
+      "roundStepsElapsed": 9375,
+      "roundStepsLeft": 0,
+      "side": 0,
+      "volumeUl": [
+       90000,
+       90000
+      ],
+      "yieldByMethodUl": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "yieldTotalUl": 0
+     }
+    }
+   ]
+  }
+ ]
+}
