@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Milkmaid — Milk, Made Service (18+)</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #0d0208; color: #eaeaea;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  main { min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; padding: 16px;
+    box-sizing: border-box; }
+  canvas { width: min(92vmin, 720px); height: min(92vmin, 720px);
+    background: #0d0208; border: 1px solid #540e46; touch-action: manipulation; }
+  p { margin: 0; font-size: 13px; color: #ac9393; text-align: center;
+    max-width: 720px; line-height: 1.5; }
+  .pink { color: #ff2e88; }
+</style>
+</head>
+<body>
+<main>
+  <canvas id="game" width="960" height="960"></canvas>
+  <p><span class="pink">MILKMAID</span> — 18+ only. Milk, Made Service: a maid-service
+  round, presented in the abstract. HOLD the canvas (or hold SPACE) to work the active
+  method; keys 1–4 switch the circuit (pinch, clamps, pump suction, cups), TAB addresses
+  the other side. When she lets down, the flow lands in the active method — and the chart
+  names it. P pauses. Sound is generated live and only ever answers your own input.</p>
+  <p id="records"></p>
+</main>
+<script type="module">
+/*__KERNEL_MJS__*/
+
+/*__GAME_MJS__*/
+
+const params = new URLSearchParams(location.search);
+const demoLevel = params.has("demo") ? Number(params.get("demo")) : null;
+const seed = params.has("seed") ? Number(params.get("seed")) : 20264;
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const game = createGame({
+  seed,
+  level: demoLevel ?? 0,
+  demo: demoLevel !== null,
+});
+if (demoLevel !== null) game.startLevel(demoLevel);
+
+// --- persistence: settings and the chart archive (lifetime rounds,
+// yield, let-downs, best round) live in localStorage; the core restores
+// them through its bridges at boot. A round itself is one sitting. ---
+const LS_KEY = "milkmaid-save-v1";
+let save = { unhurried: false, textLarge: false, yieldUl: 0, letdowns: 0, rounds: 0, bestUl: 0, done: [false, false, false] };
+try { save = { ...save, ...JSON.parse(localStorage.getItem(LS_KEY) ?? "{}") }; } catch { /* fresh save */ }
+game.applySettings(save.unhurried, save.textLarge);
+game.applyArchive(save.yieldUl, save.letdowns, save.rounds, save.bestUl);
+let lastSettingsBits = game.settingsBits();
+let foldedRounds = 0;
+function persist() { try { localStorage.setItem(LS_KEY, JSON.stringify(save)); } catch { /* private mode */ } }
+function noteScreen() {
+  const bits = game.settingsBits();
+  if (bits !== lastSettingsBits) {
+    lastSettingsBits = bits;
+    save.unhurried = (bits & 1) !== 0;
+    save.textLarge = (bits & 2) !== 0;
+    persist();
+  }
+  // Fold any newly recorded rounds into the archive, exactly once each.
+  const chart = game.sessionChart();
+  while (foldedRounds < chart.length) {
+    const rec = chart[foldedRounds];
+    foldedRounds++;
+    save.rounds += 1;
+    save.yieldUl += rec.yieldUl;
+    save.letdowns += rec.letdowns;
+    if (rec.yieldUl > save.bestUl) save.bestUl = rec.yieldUl;
+    if (rec.won) save.done[rec.level] = true;
+    game.applyArchive(save.yieldUl, save.letdowns, save.rounds, save.bestUl);
+    persist();
+    renderRecords();
+  }
+}
+function renderRecords() {
+  const el = document.getElementById("records");
+  if (!el) return;
+  const doneCount = save.done.filter(Boolean).length;
+  el.textContent = `The chart so far: ${save.rounds} rounds · ${(save.yieldUl / 1000).toFixed(1)} ml · ${save.letdowns} let-downs · rounds served ${doneCount}/3`;
+}
+renderRecords();
+
+// --- input: HOLDING is the service. A press also confirms menus; the
+// core reads the bits each screen cares about. ---
+let pendingInput = 0;
+let held = false;
+function press(bits) { pendingInput |= bits; ensureAudio(); }
+canvas.addEventListener("pointerdown", (e) => { held = true; press(INPUT.tap | INPUT.confirm); e.preventDefault(); });
+addEventListener("pointerup", () => { held = false; });
+addEventListener("pointercancel", () => { held = false; });
+addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    if (!e.repeat) { held = true; press(INPUT.tap | INPUT.confirm); }
+    e.preventDefault();
+  }
+  else if (e.repeat) return;
+  else if (e.code === "Enter") press(INPUT.confirm);
+  else if (e.code === "ArrowUp") press(INPUT.up);
+  else if (e.code === "ArrowDown") press(INPUT.down);
+  else if (e.code === "Tab" || e.code === "KeyQ") { press(INPUT.side); e.preventDefault(); }
+  else if (e.code === "Digit1") press(INPUT.mPinch);
+  else if (e.code === "Digit2") press(INPUT.mClamps);
+  else if (e.code === "Digit3") press(INPUT.mPump);
+  else if (e.code === "Digit4") press(INPUT.mCups);
+  else if (e.code === "KeyP") press(INPUT.pause);
+  else if (e.code === "Escape") press(INPUT.pause | INPUT.back);
+  else if (e.code === "Backspace") press(INPUT.back);
+});
+addEventListener("keyup", (e) => { if (e.code === "Space") held = false; });
+
+// --- audio: generated WebAudio, created only after a user gesture, and
+// only ever in response to core events that input caused. ---
+let audio = null;
+function ensureAudio() {
+  if (audio) { if (audio.state === "suspended") audio.resume(); return; }
+  try {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+  } catch { audio = null; }
+}
+function tone(freq, dur, type = "sine", gain = 0.12, when = 0) {
+  if (!audio) return;
+  const t0 = audio.currentTime + when;
+  const osc = audio.createOscillator();
+  const g = audio.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  g.gain.setValueAtTime(gain, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(g).connect(audio.destination);
+  osc.start(t0); osc.stop(t0 + dur);
+}
+function sonify(eventCode) {
+  switch (eventCode) {
+    case 1: tone(784, 0.14, "sine", 0.1); tone(988, 0.22, "sine", 0.09, 0.1); break;   // let-down
+    case 2: tone(1200, 0.04, "square", 0.04); break;                                    // method switch
+    case 3: tone(523, 0.16); tone(659, 0.16, "sine", 0.12, 0.12); tone(784, 0.34, "sine", 0.12, 0.24); break; // served
+    case 4: tone(220, 0.3, "triangle", 0.1); tone(147, 0.45, "triangle", 0.1, 0.2); break; // slipped away
+    case 5: tone(660, 0.05, "sine", 0.06); break;                                       // side switch
+    case 6: tone(392, 0.12, "triangle", 0.1); break;                                    // round begins
+  }
+}
+
+// --- painting: the core's draw list, interpreted on canvas. ---
+function paint(frame) {
+  for (const op of frame.ops) {
+    const kind = op[0];
+    const ci = kind === "t" ? op[4] : op[op.length - 1];
+    ctx.fillStyle = frame.palette[ci] ?? "#ff2e88";
+    ctx.strokeStyle = ctx.fillStyle;
+    if (kind === "r") ctx.fillRect(op[1], op[2], op[3], op[4]);
+    else if (kind === "c") { ctx.beginPath(); ctx.arc(op[1], op[2], op[3], 0, 6.2832); ctx.fill(); }
+    else if (kind === "l") {
+      ctx.lineWidth = op[5]; ctx.beginPath(); ctx.moveTo(op[1], op[2]); ctx.lineTo(op[3], op[4]); ctx.stroke();
+    } else if (kind === "p") {
+      ctx.beginPath(); ctx.moveTo(op[1], op[2]); ctx.lineTo(op[3], op[4]); ctx.lineTo(op[5], op[6]);
+      ctx.closePath(); ctx.fill();
+    } else if (kind === "t") {
+      ctx.font = `${op[3]}px ui-monospace, Menlo, monospace`;
+      ctx.textBaseline = "top";
+      ctx.fillText(op[5], op[1], op[2]);
+    }
+  }
+}
+
+// --- fixed-step loop: 16 ms steps, paint the newest frame. ---
+let acc = 0;
+let last = performance.now();
+function loop(now) {
+  acc += Math.min(now - last, 250);
+  last = now;
+  let stepped = false;
+  while (acc >= 16) {
+    const bits = pendingInput | (held ? INPUT.tap : 0);
+    pendingInput = 0;
+    game.step(bits);
+    const ev = game.event();
+    if (ev !== 0) sonify(ev);
+    acc -= 16;
+    stepped = true;
+  }
+  if (stepped) { noteScreen(); paint(game.frame()); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
