@@ -1,3 +1,5 @@
+> **Game page:** the full storefront page for this game lives at [docs/GAME-PAGE.md](docs/GAME-PAGE.md).
+
 # Milkmaid
 
 **Nice Thoughts Ranch** · Torogao Jam Program week 10 (Wave C — Mini-games: the Crescendo set) · Alma · **Mojo**
