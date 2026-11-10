@@ -14,7 +14,7 @@ All characters depicted are adults.
 
 ## A timed service game where you work four switchable methods to build pressure and reach each round's yield target.
 
-<p align="center"><a href="https://github.com/NTRanch/milkmaid">GitHub</a> · <a href="https://github.com/NTRanch/milkmaid/blob/main/LICENSE.md">License</a> · <a href="https://ntranch.itch.io">itch.io studio page</a></p>
+<p align="center"><a href="https://github.com/NTRanch/milkmaid">GitHub</a> · <a href="https://github.com/NTRanch/milkmaid/blob/main/LICENSE.md">License</a> · <a href="https://ntranch.itch.io">itch.io studio page</a> · <a href="https://github.com/NTRanch/milkmaid/releases/tag/v1.0.0">Release</a></p>
 
 ![Milkmaid header](../assets/brand/header.png)
 
